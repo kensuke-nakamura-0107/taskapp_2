@@ -10,10 +10,13 @@ import UIKit
 import RealmSwift
 import UserNotifications
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource,UISearchBarDelegate {
 
     @IBOutlet weak var tableView: UITableView!
-    
+    @IBOutlet weak var searchBar: UISearchBar!
+    //検索用変数
+    var search_fg : Int!
+    var search_text : String!
     // Realmインスタンスを取得する
     let realm = try! Realm()
     // DB内のタスクが格納されるリスト。
@@ -24,28 +27,58 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         // Do any additional setup after loading the view.
         tableView.delegate = self
         tableView.dataSource = self
+        searchBar.delegate = self
+        search_fg = 0
     }
-
+    //検索ボタン押下時の呼び出しメソッド
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        search_text = searchBar.text
+        if search_text == "" {
+            search_fg = 0
+            tableView.reloadData()
+        } else {
+            search_fg = 1
+            tableView.reloadData()
+        }
+    }
+    
     // データの数（＝セルの数）を返すメソッド
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return taskArray.count  // ←修正する
+        search_text = searchBar.text
+        let predicate = NSPredicate(format: "category = %@",search_text)
+        if search_fg == 0 {
+            return taskArray.count
+        } else {
+            return taskArray.filter(predicate).count
+        }
     }
 
     // 各セルの内容を返すメソッド
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         // 再利用可能な cell を得る
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+        search_text = searchBar.text
+        let predicate = NSPredicate(format: "category = %@",search_text)
 
-        // Cellに値を設定する.  --- ここから ---
-        let task = taskArray[indexPath.row]
-        cell.textLabel?.text = task.title
+        if search_fg == 0 {
+            let task = taskArray[indexPath.row]
+            cell.textLabel?.text = task.title
 
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd HH:mm"
 
-        let dateString:String = formatter.string(from: task.date)
-        cell.detailTextLabel?.text = dateString
-        // --- ここまで追加 ---
+            let dateString:String = formatter.string(from: task.date)
+            cell.detailTextLabel?.text = dateString
+        } else {
+            let task = taskArray.filter(predicate)[indexPath.row]
+            cell.textLabel?.text = task.title
+
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd HH:mm"
+
+            let dateString:String = formatter.string(from: task.date)
+            cell.detailTextLabel?.text = dateString
+        }
 
         return cell
     }

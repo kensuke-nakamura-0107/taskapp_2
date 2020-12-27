@@ -14,6 +14,8 @@ class inputViewController: UIViewController {
     @IBOutlet weak var ContentsTextView: UITextView!
     @IBOutlet weak var datePicker: UIDatePicker!
     
+    var task: Task!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 

@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import UserNotifications
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
@@ -24,17 +25,18 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         tableView.delegate = self
         tableView.dataSource = self
     }
-    
+
     // データの数（＝セルの数）を返すメソッド
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return taskArray.count
+        return taskArray.count  // ←修正する
     }
 
     // 各セルの内容を返すメソッド
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         // 再利用可能な cell を得る
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        
+
+        // Cellに値を設定する.  --- ここから ---
         let task = taskArray[indexPath.row]
         cell.textLabel?.text = task.title
 
@@ -43,6 +45,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
 
         let dateString:String = formatter.string(from: task.date)
         cell.detailTextLabel?.text = dateString
+        // --- ここまで追加 ---
 
         return cell
     }
@@ -60,16 +63,33 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     // Delete ボタンが押された時に呼ばれるメソッド
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
+            // 削除するタスクを取得する
+            let task = self.taskArray[indexPath.row]
+
+            // ローカル通知をキャンセルする
+            let center = UNUserNotificationCenter.current()
+            center.removePendingNotificationRequests(withIdentifiers: [String(task.id)])
+
             // データベースから削除する
             try! realm.write {
-                self.realm.delete(self.taskArray[indexPath.row])
+                self.realm.delete(task)
                 tableView.deleteRows(at: [indexPath], with: .fade)
             }
-        }
+
+            // 未通知のローカル通知一覧をログ出力
+            center.getPendingNotificationRequests { (requests: [UNNotificationRequest]) in
+                for request in requests {
+                    print("/---------------")
+                    print(request)
+                    print("---------------/")
+                }
+            }
+        } 
+ 
     }
     // segue で画面遷移する時に呼ばれる
     override func prepare(for segue: UIStoryboardSegue, sender: Any?){
-        let inputViewController:InputViewController = segue.destination as! InputViewController
+        let inputViewController:inputViewController = segue.destination as! inputViewController
 
         if segue.identifier == "cellSegue" {
             let indexPath = self.tableView.indexPathForSelectedRow
@@ -85,5 +105,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             inputViewController.task = task
         }
     }
+    // 入力画面から戻ってきた時に TableView を更新させる
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tableView.reloadData()
+    }
+    
 }
 

@@ -74,7 +74,7 @@
         <!--Input View Controller-->
         <scene sceneID="LkJ-55-QMT">
             <objects>
-                <viewController id="ciQ-uQ-cTY" customClass="inputViewController" customModule="taskapp" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="ciQ-uQ-cTY" customClass="inputViewController" customModule="taskapp" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="2Jn-D5-1tb">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
